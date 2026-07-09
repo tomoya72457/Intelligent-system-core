@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# この pre-commit フックはコミット前にローカルで最低限のゲートを強制する:
+# (1) 構造・ドキュメント予算チェック (2) gitleaks によるステージ済み秘密の検出(導入時のみ)。
+# CI は同じチェックのバックストップ(二層強制)。有効化: git config core.hooksPath tools/githooks
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+fail() { printf '\033[31m[pre-commit]\033[0m %s\n' "$*" >&2; exit 1; }
+
+# --- (1) 構造チェック ---
+if ! command -v python3 >/dev/null 2>&1; then
+  fail "python3 が見つかりません。構造チェックを実行できないためコミットを中止します。"
+fi
+if ! python3 tools/check_structure.py --quiet; then
+  fail "構造チェックに失敗しました。上のエラーを修正してから再コミットしてください(詳細: make structure)。"
+fi
+
+# --- (2) 秘密検出(gitleaks がある場合のみ。無ければ CI 側の gitleaks が拾う) ---
+if command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks git --pre-commit --staged --no-banner --redact; then  # v8.19+ の現行形(protect は非推奨)
+    fail "gitleaks がステージ済みの秘密らしき値を検出しました。該当箇所を除去してください(.env は .gitignore 済み・形は .env.example へ)。"
+  fi
+fi
+
+exit 0

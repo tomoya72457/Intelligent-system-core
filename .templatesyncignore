@@ -1,0 +1,25 @@
+# このファイルは actions-template-sync がテンプレート更新 PR から除外する対象を定義する。
+# プロジェクト固有・台帳・生成物はテンプレート側の内容で上書きさせない。
+
+# プロジェクト固有(bootstrap.sh が実値化 / 各プロジェクトで育てる)
+README.md
+AGENTS.md
+LICENSE
+.env.example
+
+# 判断・履歴の台帳(プロジェクトごとに追記される。全文上書き禁止)
+docs/adr/
+docs/governance/intake/
+docs/governance/tech-radar.md
+
+# セッション/運用の生成物
+docs/handoffs/
+docs/incidents/
+docs/specs/
+
+# プロファイルが配置したプロジェクト所有ファイル
+Makefile.profile
+
+# 同期 workflow 自体は同期対象外(GITHUB_TOKEN は workflow ファイルを push できない GitHub 制約。
+# workflow の更新をテンプレートから配送したい場合は PAT が必要 — README の FAQ 参照)
+.github/workflows/template-sync.yml
