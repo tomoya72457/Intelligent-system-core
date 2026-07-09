@@ -17,6 +17,7 @@
 | 依存境界 lint(d-cruiser / import-linter, freeze方式) | 4 | 4 | 5 | 3 | 4 | 4.10 | Parnas 系+Netflix 実績+Adidas | architecture-fitness-functions |
 | hooks 二層強制(危険遮断+秘密遮断+設定保護) | 4 | 5 | 5 | 3 | 4 | 4.30 | 日本7ソース+公式+GitInject | hooks-enforcement-layer |
 | シークレット防衛(gitleaks 二層+.env.example+deny) | 5 | 5 | 4 | 4 | 5 | 4.60 | private 無償スキャン不在+AI 2倍リーク | secrets-defense |
+| python venv の iCloud 外退避(UV_PROJECT_ENVIRONMENT) | 3 | 2.5 | 4 | 5 | 5 | 3.65 | 同日2回の実障害+規約「2回目で機械強制化」発動 | venv-outside-icloud |
 | Rulesets JSON+bootstrap 適用(force-push/削除保護。PR必須は 2026-07-09 オーナー決定で撤回=ADR-0006) | 4 | 5 | 4 | 4 | 5 | 4.30 | GitHub 公式検証済+テンプレ非コピー問題 | rulesets-and-bootstrap |
 | Conventional Commits+.gitmessage(lintゲート無し) | 4 | 5 | 4 | 5 | 5 | 4.45 | 公式 spec+ソロ実践報告 | small-batch-discipline |
 | 軽量ADR(minimal+Confirmation欄) | 4 | 5 | 4 | 3 | 4 | 4.05 | Radar Adopt+rot 対策込み | issue-forms-and-adr |

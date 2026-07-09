@@ -28,4 +28,4 @@
 
 ## Confirmation
 
-- 2026-07-09: テンプレートと webcreate-engine の ruleset を API で更新し、直 push が通ること・force push が拒否されることを確認して追記予定。
+- 2026-07-09: 両リポジトリの ruleset を API 更新(rules=non_fast_forward+deletion)し、直接 push の成功を実測(ISC 73aa8a6 / webcreate-engine dfd4717)。force push 拒否は ruleset ルールに依拠(未実測)。auto-merge 待ちだった webcreate-engine PR #1 は ruleset 緩和と同時に自動マージされ、未処理 PR はゼロ。
