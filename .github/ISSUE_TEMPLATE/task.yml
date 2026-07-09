@@ -1,0 +1,54 @@
+# 目的: 構造化タスクIssue。着手可能な粒度（検証可能な受け入れ基準）を必須化する。
+# 注記: validations.required は public リポジトリでのみ強制される（GitHub 仕様）。
+#       private では未入力でも送信できるため、レビュー時に人手で確認する。
+name: タスク
+description: 実装・変更タスクを構造化して登録する（受け入れ基準まで揃えて着手可能に）。
+title: "[task]: "
+labels: ["needs-spec"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        検証可能な受け入れ基準まで揃えば `agent:ready` へ移せます。
+        仕様が固まっていない場合はこのまま `needs-spec` で登録してください。
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 目的
+      description: このタスクで達成したいこと（なぜ）を 1〜3 行で。
+      placeholder: 例）ダッシュボードに直近7日のクリック数グラフを追加する。
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景・現状
+      description: 現在の状態、関連する経緯、制約など。
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ基準
+      description: 完了を機械的・観察可能に判定できる形で列挙する。
+      placeholder: |
+        検証可能な形で:
+        - `make check` が通る
+        - /dashboard を開くと直近7日のグラフが表示される
+        - データが無いときは「データなし」と表示される
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: スコープ外
+      description: このタスクでは扱わないこと。肥大化を防ぐため明示する。
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: 関連ファイル・参照
+      description: 関連ファイルのパス、Issue/PR 番号、ドキュメント、外部リンクなど。
+    validations:
+      required: false

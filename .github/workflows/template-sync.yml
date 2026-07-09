@@ -1,0 +1,66 @@
+# 目的: 生成元テンプレートの更新を pull 型で取り込み、更新PRを自動作成する。
+#       テンプレート本体および未設定リポジトリでは動作しない（下の guard を参照）。
+#       bootstrap.sh が {{TEMPLATE_REPO}} を実値へ置換して有効化する（プレースホルダの説明は README.md）。
+name: template-sync
+
+on:
+  schedule:
+    - cron: "0 0 * * 1" # 毎週月曜 00:00 UTC = 09:00 JST
+  workflow_dispatch:
+
+# 既定は読み取りのみ。同期ジョブだけがジョブ単位で書き込みへ昇格する。
+permissions:
+  contents: read
+
+concurrency:
+  group: template-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # bootstrap.sh が生成元テンプレートのパス（owner/repo）へ置換する。
+  # 未置換（テンプレート本体）の間は guard ステップがスキップする。
+  # 注: この値を ${{ }} 式に直接埋め込むと未置換時に "}}" が workflow パーサを壊すため、
+  #     guard は式ではなくシェルで判定している。
+  TEMPLATE_REPO: "{{TEMPLATE_REPO}}"
+
+jobs:
+  template-sync:
+    name: template-sync
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 同期ブランチの push に必要
+      pull-requests: write # 更新PRの作成に必要
+    steps:
+      - name: 実行可否の判定（テンプレート本体・未設定ではスキップ）
+        id: guard
+        env:
+          THIS_REPO: ${{ github.repository }}
+        run: |
+          # プレースホルダ未置換（テンプレート本体）ならスキップ
+          case "$TEMPLATE_REPO" in
+            *"{{"*)
+              echo "生成元テンプレート未設定のためスキップします（bootstrap.sh 未実行）。"
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+          # 自分自身が生成元テンプレートならスキップ
+          if [ "$THIS_REPO" = "$TEMPLATE_REPO" ]; then
+            echo "テンプレート本体のためスキップします。"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
+      - name: チェックアウト
+        if: steps.guard.outputs.run == 'true'
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: テンプレート同期PRの作成
+        if: steps.guard.outputs.run == 'true'
+        uses: AndreasAugustin/actions-template-sync@8a0f668b83c32a0f673353086d74f12b8853d4f5 # v2.5.3
+        with:
+          source_repo_path: ${{ env.TEMPLATE_REPO }}
+          upstream_branch: main
+          pr_labels: template-sync
+          pr_title: "chore(template-sync): 生成元テンプレートの更新を取り込む"

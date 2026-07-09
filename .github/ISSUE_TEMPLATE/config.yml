@@ -1,0 +1,3 @@
+# 目的: Issue 作成を構造化フォーム（task.yml）へ誘導する。
+# 注記: blank_issues_enabled: false でも、GitHub 仕様上、直接 URL からの空 Issue 作成は可能。
+blank_issues_enabled: false
