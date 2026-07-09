@@ -20,6 +20,9 @@ docs/specs/
 # プロファイルが配置したプロジェクト所有ファイル
 Makefile.profile
 
+# bootstrap がプロファイルのエコシステムを追記するため、テンプレート側で上書きしない
+.github/dependabot.yml
+
 # 同期 workflow 自体は同期対象外(GITHUB_TOKEN は workflow ファイルを push できない GitHub 制約。
 # workflow の更新をテンプレートから配送したい場合は PAT が必要 — README の FAQ 参照)
 .github/workflows/template-sync.yml
