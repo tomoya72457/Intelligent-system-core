@@ -1,0 +1,6 @@
+{
+  "//": "このファイルの目的: Gemini CLI にコンテキストファイルとして AGENTS.md(正本)を読ませる。規範の複製は作らない。",
+  "context": {
+    "fileName": ["AGENTS.md"]
+  }
+}
