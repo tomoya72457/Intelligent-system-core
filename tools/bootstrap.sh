@@ -356,7 +356,7 @@ cat <<'NEXT'
 次の一歩:
   1. make check           # 全ゲートが通ることを確認
   2. git add <ファイル> && git commit   # 変更を確認してコミット(Conventional Commits)
-  3. 以後の変更は必ずブランチ + PR で(main 直 push は ruleset が拒否)
+  3. `make check` が緑なら main へ直接 push してよい(ruleset が拒否するのは force push とブランチ削除のみ)
   FAIL / SKIP がある場合は、原因解消後に本スクリプトを再実行すれば該当箇所のみ適用されます(冪等)。
 NEXT
 log "bootstrap 完了。"

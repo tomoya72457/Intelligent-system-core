@@ -25,7 +25,7 @@
 
 ## 絶対禁止(Never — 例外なく守る)
 
-- `main` への直接 push。変更は必ず PR 経由。
+- `make check` が緑でない状態での push(赤のまま push しない)。
 - `.env` / `secrets/` の読み取り・出力・コミット。値の形が必要なら `cat .env.example` で見る(Read ツールはガードが遮断する)。
 - エージェントのガード設定(`.claude/settings*`・`.claude/hooks/`・`.gemini/`・`.cursor/`・`.github/workflows/`・`tools/githooks/`)の自己編集。人間が変更し ADR に記録する(セキュリティ境界)。`.claude/skills/`・`.claude/agents/` の内容は通常の編集対象。
 - パス無指定の一括ステージング(`git add -A` / `git add .` / `git commit -a`)。変更ファイルを明示する。
@@ -46,7 +46,7 @@
 
 ## 常時適用の規範
 
-- 小さな PR: 1 PR = 1 論理変更・目安 ±400 行以内。超過は CI が警告する。
+- 小さな変更単位: 1 push = 1 論理変更・目安 ±400 行以内(PR を使う場合も同様)。超過は CI が警告する。
 - コミット: Conventional Commits(`feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `ci`)。雛形は `.gitmessage`。本文・コメントは日本語、識別子とコミット type は英語。
 - フェイルファスト: 異常は握り潰さず即座に失敗させる。未使用の「保険」分岐を足さない(YAGNI)。
 - 推測で API を書かない: 未確認のライブラリ・関数・引数は、使う前に実在と仕様を確認する。
@@ -59,7 +59,7 @@
 Always(常に行う):
 
 - `make check` で検証してから結果を報告する。
-- 変更は PR で提出する。アーキテクチャ判断を含むなら該当 ADR を参照・追記する(無ければ N/A と書く)。
+- `make check` が緑の変更を main へ push する(PR は任意)。アーキテクチャ判断を含むなら該当 ADR を参照・追記する(無ければ N/A と書く)。
 
 Ask first(着手前に人間へ確認する):
 
@@ -79,7 +79,7 @@ Ask first(着手前に人間へ確認する):
 
 ## 最重要ルールの再掲(必読)
 
-1. `main` への直 push 禁止 — 変更は必ず PR。
+1. push は `make check` 緑が前提 — 赤のまま push しない。
 2. `.env` / 秘密の読み取り禁止 — 形が必要なら `.env.example`。
 3. エージェント設定の自己編集禁止 — 人間が行い ADR に記録。
 4. 「完成」宣言は人間のみ — エージェントは検証した事実だけを報告する。

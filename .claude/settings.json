@@ -11,9 +11,7 @@
       "Read(./**/id_ed25519)",
       "Bash(sudo:*)"
     ],
-    "ask": [
-      "Bash(git push:*)"
-    ]
+    "ask": []
   },
   "hooks": {
     "PreToolUse": [

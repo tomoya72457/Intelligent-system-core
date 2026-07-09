@@ -30,7 +30,7 @@ AI コーディングエージェント(Claude Code を中心に Codex / Cursor 
    ブランチ保護 ruleset 適用、マージ設定(squash のみ・自動マージ・マージ後ブランチ削除)、
    Actions 権限の最小化、ラベル 5 種作成、githooks の有効化。
 
-3. 開発を始める。変更のたびに `make check` で全ゲートを検証し、PR を出す。
+3. 開発を始める。変更のたびに `make check` で全ゲートを検証し、緑なら main へ push する(PR は任意)。
 
    ```bash
    make check

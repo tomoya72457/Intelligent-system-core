@@ -9,3 +9,4 @@
 | [0003](0003-adoption-judge-permanent.md) | adoption-judge を恒久装備とする | 承認 | 2026-07-09 |
 | [0004](0004-stack-profiles.md) | スタックは typescript / python / docs の3プロファイル | 承認 | 2026-07-09 |
 | [0005](0005-agents-md-canonical-pointers.md) | AGENTS.md 正本+全ツールポインタ統合 | 承認 | 2026-07-09 |
+| [0006](0006-direct-push-workflow.md) | PR 必須を撤回し直接 push を既定へ(オーナー決定) | 承認 | 2026-07-09 |

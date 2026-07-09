@@ -17,7 +17,7 @@
 | 依存境界 lint(d-cruiser / import-linter, freeze方式) | 4 | 4 | 5 | 3 | 4 | 4.10 | Parnas 系+Netflix 実績+Adidas | architecture-fitness-functions |
 | hooks 二層強制(危険遮断+秘密遮断+設定保護) | 4 | 5 | 5 | 3 | 4 | 4.30 | 日本7ソース+公式+GitInject | hooks-enforcement-layer |
 | シークレット防衛(gitleaks 二層+.env.example+deny) | 5 | 5 | 4 | 4 | 5 | 4.60 | private 無償スキャン不在+AI 2倍リーク | secrets-defense |
-| Rulesets JSON+bootstrap 適用(PR必須・承認0・本人bypass) | 4 | 5 | 4 | 4 | 5 | 4.30 | GitHub 公式検証済+テンプレ非コピー問題 | rulesets-and-bootstrap |
+| Rulesets JSON+bootstrap 適用(force-push/削除保護。PR必須は 2026-07-09 オーナー決定で撤回=ADR-0006) | 4 | 5 | 4 | 4 | 5 | 4.30 | GitHub 公式検証済+テンプレ非コピー問題 | rulesets-and-bootstrap |
 | Conventional Commits+.gitmessage(lintゲート無し) | 4 | 5 | 4 | 5 | 5 | 4.45 | 公式 spec+ソロ実践報告 | small-batch-discipline |
 | 軽量ADR(minimal+Confirmation欄) | 4 | 5 | 4 | 3 | 4 | 4.05 | Radar Adopt+rot 対策込み | issue-forms-and-adr |
 | Issue Forms 構造化タスク(受け入れ基準必須) | 4 | 5 | 5 | 4 | 4 | 4.45 | GitHub 公式+小タスク実証 | issue-forms-and-adr |
