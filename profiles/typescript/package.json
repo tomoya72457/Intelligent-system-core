@@ -1,0 +1,24 @@
+{
+  "name": "{{PROJECT_SLUG}}",
+  "version": "0.1.0",
+  "private": true,
+  "description": "{{PROJECT_PURPOSE}}",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "arch": "depcruise src --config",
+    "arch:baseline": "depcruise src --config --output-type baseline --output-to .dependency-cruiser-known-violations.json"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.3",
+    "dependency-cruiser": "^18.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

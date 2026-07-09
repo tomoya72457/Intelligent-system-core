@@ -1,0 +1,73 @@
+# このファイルの目的: pythonプロファイルのプロジェクト定義(uv前提)。
+# テスト(pytest)・リント(ruff)・型(mypy)・依存境界(import-linter)の設定を1ファイルに集約する。
+# 実行はすべて make 経由(Makefile.profile が uv run に委譲する)。
+
+[project]
+name = "{{PROJECT_SLUG}}"
+version = "0.1.0"
+description = "{{PROJECT_PURPOSE}}"
+requires-python = ">=3.12"
+dependencies = []
+
+# ── ビルドバックエンド ──────────────────────────────────
+# uv_build + src レイアウト。パッケージ実体は src/app/(module-name で明示)。
+# `uv sync` が自パッケージを editable 導入するため、tests からも `import app` がそのまま通る。
+[build-system]
+requires = ["uv_build>=0.11.28,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "app"
+
+# ── 開発依存(PEP 735)。`uv sync` が dev グループを既定で導入する ──
+# バージョンは 2026-07 時点の安定版を下限指定。更新は dependabot(cooldown 7日)に任せる。
+[dependency-groups]
+dev = [
+    "ruff>=0.15.20",
+    "mypy>=2.2.0",
+    "pytest>=9.1.1",
+    "import-linter>=2.13",
+    # カバレッジ床(Trial・オプトイン)を有効化する場合は次の行を戻す
+    # "pytest-cov",
+]
+
+# ── リント+フォーマット(ruff) ─────────────────────────
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# E/F: pycodestyle+pyflakes基本, I: import整列, UP: 古い書き方の現代化, B: bugbear(実バグ予備軍)
+select = ["E", "F", "I", "UP", "B"]
+
+# ── 型チェック(mypy) ──────────────────────────────────
+# strict 寄り: 型注釈なしの関数定義を禁止する(公開・非公開を問わず)。
+[tool.mypy]
+files = ["src", "tests"]
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_return_any = true
+
+# ── テスト(pytest) ────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# カバレッジ床(Trial・オプトイン。docs/governance/tech-radar.md 参照)。
+# 数値ゲーム化のリスクがあるため既定では無効。有効化するには dev 依存の pytest-cov を
+# 戻した上で次の行を戻し、床は現状の実測値から始めて漸増させる。
+# addopts = "--cov=app --cov-fail-under=70"
+
+# ── 依存境界(import-linter) ───────────────────────────
+# 層契約「api → services → models の一方向」。実行: make arch(= uv run lint-imports)。
+# 層を変更・追加する場合はこの契約を更新し、ADR に記録すること。
+# 既存コードへの後付け(freeze/baseline 相当)は、違反が残る間だけ
+# [[tool.importlinter.contracts]] の unmatched_ignore_imports_alerting と
+# ignore_imports(違反 import の明示列挙)で凍結し、返済に合わせて列挙を縮める。
+[tool.importlinter]
+root_packages = ["app"]
+
+[[tool.importlinter.contracts]]
+name = "層契約: api → services → models の一方向依存"
+type = "layers"
+layers = ["api", "services", "models"]
+containers = ["app"]
