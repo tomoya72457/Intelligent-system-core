@@ -1,35 +1,9 @@
-# 目的: 依存の自動更新PR。cooldown（7日）で駆け込み更新を避け、patch/minor はまとめ、major は個別PR にする。
-# 注記: npm / pip の対象ファイルが無いリポジトリでは、その ecosystem は何もしない（no-op）。
+# 目的: 依存の自動更新PR。cooldown(7日)で駆け込み更新を避け、patch/minor はまとめ、major は個別PR にする。
+# 注記: テンプレート状態では github-actions のみ監視する(npm / pip のマニフェストは profiles/ 配下に
+#       あり、ルートを見る設定だと Dependabot の実行が failure になるため——2026-07-09 実測)。
+#       npm / pip のブロックは tools/bootstrap.sh がプロファイル展開時にここへ追記する。
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    cooldown:
-      default-days: 7
-    open-pull-requests-limit: 5
-    groups:
-      npm-minor-patch:
-        applies-to: version-updates
-        update-types: ["minor", "patch"]
-        patterns: ["*"]
-
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    cooldown:
-      default-days: 7
-    open-pull-requests-limit: 5
-    groups:
-      pip-minor-patch:
-        applies-to: version-updates
-        update-types: ["minor", "patch"]
-        patterns: ["*"]
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

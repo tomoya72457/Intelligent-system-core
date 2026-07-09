@@ -208,6 +208,48 @@ EOF
 }
 log "(3) プロファイル展開"; step_profile
 
+# ---------- (3b) Dependabot にプロファイルのエコシステムを追記 ----------
+# テンプレートの dependabot.yml は github-actions のみ(マニフェスト不在の npm/pip 設定は
+# Dependabot 実行が failure になるため——2026-07-09 実測)。展開後はルートにマニフェストが
+# 置かれるので、ここで該当エコシステムのブロックを追記する(冪等)。
+append_dependabot_ecosystem() { # $1=ecosystem名
+  local f=".github/dependabot.yml"
+  [ -f "$f" ] || { doctor_add "Dependabot 追記" "SKIP" "${f} なし"; return 0; }
+  if grep -q "package-ecosystem: \"$1\"" "$f"; then
+    doctor_add "Dependabot 追記" "SKIP" "$1 は設定済み"; return 0
+  fi
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "  [dry-run] ${f} に ${1} ブロックを追記"
+    doctor_add "Dependabot 追記" "SKIP" "dry-run"; return 0
+  fi
+  cat >> "$f" <<DEPEOF
+
+  - package-ecosystem: "$1"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      $1-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+DEPEOF
+  doctor_add "Dependabot 追記" "OK" "$1 を監視対象に追加"
+}
+step_dependabot() {
+  case "${PROFILE:-}" in
+    typescript) append_dependabot_ecosystem "npm" ;;
+    python)     append_dependabot_ecosystem "pip" ;;
+    "")         doctor_add "Dependabot 追記" "SKIP" "プロファイル未指定" ;;
+    *)          doctor_add "Dependabot 追記" "SKIP" "${PROFILE} は追加エコシステムなし" ;;
+  esac
+}
+log "(3b) Dependabot エコシステム追記"; step_dependabot
+
 # ---------- (4)-(7) GitHub 設定(gh 必要。失敗は警告して続行) ----------
 gh_step() { # $1=doctor項目名 $2=失敗時補足 以降=コマンド
   local label="$1" hint="$2"; shift 2
