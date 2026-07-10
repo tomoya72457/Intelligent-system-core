@@ -47,7 +47,7 @@ ROOT_IGNORED_NAMES = {
     # 依存・ビルド生成物
     "node_modules", "dist", "build", "coverage", "htmlcov",
     ".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
-    ".coverage",
+    ".import_linter_cache", ".coverage",
     # プロファイル展開後のプロジェクトが持つソース/テストディレクトリ
     "src", "tests",
     # typescript プロファイルがルートに置く設定
@@ -69,7 +69,8 @@ STALE_PATTERNS = []
 # rglob 走査時にスキップするディレクトリ名。
 _SKIP_DIR_PARTS = {
     ".git", "node_modules", ".venv", "venv", "__pycache__",
-    ".pytest_cache", ".mypy_cache", ".ruff_cache", "dist", "build", "scratch",
+    ".pytest_cache", ".mypy_cache", ".ruff_cache", ".import_linter_cache",
+    "dist", "build", "scratch",
 }
 
 

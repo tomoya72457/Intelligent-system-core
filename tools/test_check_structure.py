@@ -106,6 +106,7 @@ class CheckStructureTest(unittest.TestCase):
 
     def test_root_ignored_artifacts_ok(self):
         (self.root / "node_modules").mkdir()
+        (self.root / ".import_linter_cache").mkdir()  # make arch(import-linter)が生成
         (self.root / "src").mkdir()    # プロファイル展開後のソース/テストも許可
         (self.root / "tests").mkdir()
         write(self.root / "package.json", "{}\n")
