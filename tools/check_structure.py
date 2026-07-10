@@ -114,15 +114,15 @@ def check_agents_md(root):
     n_bytes = len(data)
     if n_lines > AGENTS_MD_HARD_LINES:
         problems.append(("error",
-            "AGENTS.md が %d 行(ハード上限 %d 行)。詳細を docs/ か .claude/skills/ へ逃がす。"
-            % (n_lines, AGENTS_MD_HARD_LINES)))
+            f"AGENTS.md が {n_lines} 行(ハード上限 {AGENTS_MD_HARD_LINES} 行)。"
+            "詳細を docs/ か .claude/skills/ へ逃がす。"))
     elif n_lines > AGENTS_MD_SOFT_LINES:
         problems.append(("warn",
-            "AGENTS.md が %d 行(ソフト目安 %d 行)。段階開示で外部化を検討。"
-            % (n_lines, AGENTS_MD_SOFT_LINES)))
+            f"AGENTS.md が {n_lines} 行(ソフト目安 {AGENTS_MD_SOFT_LINES} 行)。"
+            "段階開示で外部化を検討。"))
     if n_bytes > AGENTS_MD_HARD_BYTES:
         problems.append(("error",
-            "AGENTS.md が %d バイト(ハード上限 %d バイト)。" % (n_bytes, AGENTS_MD_HARD_BYTES)))
+            f"AGENTS.md が {n_bytes} バイト(ハード上限 {AGENTS_MD_HARD_BYTES} バイト)。"))
     return problems
 
 
@@ -138,11 +138,11 @@ def check_claude_md(root):
     first_line = lines[0] if lines else ""
     if "@AGENTS.md" not in first_line:
         problems.append(("error",
-            "CLAUDE.md の 1 行目に @AGENTS.md がありません(現在: %r)。" % first_line))
+            f"CLAUDE.md の 1 行目に @AGENTS.md がありません(現在: {first_line!r})。"))
     if n_bytes > CLAUDE_MD_HARD_BYTES:
         problems.append(("error",
-            "CLAUDE.md が %d バイト(上限 %d バイト)。ポインタに徹する。"
-            % (n_bytes, CLAUDE_MD_HARD_BYTES)))
+            f"CLAUDE.md が {n_bytes} バイト(上限 {CLAUDE_MD_HARD_BYTES} バイト)。"
+            "ポインタに徹する。"))
     return problems
 
 
@@ -181,7 +181,7 @@ def check_stale_refs(root, patterns=None):
         for pat in patterns:
             if pat in text:
                 problems.append(("error",
-                    "陳腐化参照: %s に旧パターン %r が残っています。" % (rel, pat)))
+                    f"陳腐化参照: {rel} に旧パターン {pat!r} が残っています。"))
     return problems
 
 
@@ -193,8 +193,8 @@ def check_root_allowlist(root):
         if _root_ignored(entry):
             continue
         problems.append(("error",
-            "ルート直下に想定外の項目: %s(許可リスト外)。"
-            "設置場所を見直すか、正当なら check_structure.py の許可リストを更新。" % entry))
+            f"ルート直下に想定外の項目: {entry}(許可リスト外)。"
+            "設置場所を見直すか、正当なら check_structure.py の許可リストを更新。"))
     return problems
 
 
@@ -229,7 +229,7 @@ def main(argv=None):
 
     root = Path(args.root).resolve() if args.root else _default_root()
     if not root.is_dir():
-        print("ERROR: 検査対象が見つかりません: %s" % root, file=sys.stderr)
+        print(f"ERROR: 検査対象が見つかりません: {root}", file=sys.stderr)
         return 1
 
     problems = check_repo(root)
@@ -244,13 +244,13 @@ def main(argv=None):
 
     if errors:
         if not args.quiet:
-            print("check_structure: %d 件のエラー。修正が必要です。" % len(errors),
+            print(f"check_structure: {len(errors)} 件のエラー。修正が必要です。",
                   file=sys.stderr)
         return 1
     if not args.quiet:
         msg = "check_structure: OK"
         if warns:
-            msg += "(警告 %d 件)" % len(warns)
+            msg += f"(警告 {len(warns)} 件)"
         print(msg)
     return 0
 

@@ -93,7 +93,8 @@ class CheckStructureTest(unittest.TestCase):
 
     def test_profiles_without_readme(self):
         (self.root / "profiles").mkdir()
-        self.assertTrue(any("profiles/README.md" in m for m in self.errors(cs.check_repo(self.root))))
+        self.assertTrue(
+            any("profiles/README.md" in m for m in self.errors(cs.check_repo(self.root))))
 
     def test_profiles_with_readme_passes(self):
         write(self.root / "profiles" / "README.md", "# profiles\n")
