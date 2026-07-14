@@ -20,6 +20,7 @@
 | 大きな要望を小タスク(Issue)に分解したい | `docs/playbooks/task-decomposition.md` |
 | 複数エージェントを並列で走らせたい(Trial) | `docs/playbooks/parallel-agents.md` |
 | 本番データへの書き込みを安全に行いたい | `docs/playbooks/production-writes.md` |
+| ガードの残存穴(下流監査由来)と修正提案の引き継ぎを読みたい | `docs/handoffs/2026-07-14-guard-gaps-from-rutirise-audit.md` |
 
 ## docs/ の外にあるもの
 
