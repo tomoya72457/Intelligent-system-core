@@ -332,7 +332,7 @@ step_template_sync() {
   if [ "$GH_READY" -eq 1 ]; then
     src_repo="$(gh repo view --json templateRepository -q '.templateRepository.owner.login + "/" + .templateRepository.name' 2>/dev/null || true)"
   fi
-  case "$src_repo" in */*) : ;; *) src_repo="$TEMPLATE_REPO_DEFAULT" ;; esac
+  case "$src_repo" in ?*/?*) : ;; *) src_repo="$TEMPLATE_REPO_DEFAULT" ;; esac
   if [ "$DRY_RUN" -eq 1 ]; then echo "  [dry-run] ${f}: {{TEMPLATE_REPO}} → ${src_repo}"; doctor_add "template-sync 設定" "SKIP" "dry-run"; return 0; fi
   F="$f" V="$src_repo" python3 -c 'import os; p=os.environ["F"]; s=open(p,encoding="utf-8").read(); open(p,"w",encoding="utf-8").write(s.replace("{{TEMPLATE_REPO}}", os.environ["V"]))'
   doctor_add "template-sync 設定" "OK" "$src_repo"
