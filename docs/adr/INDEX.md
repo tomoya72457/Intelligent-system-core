@@ -11,3 +11,4 @@
 | [0005](0005-agents-md-canonical-pointers.md) | AGENTS.md 正本+全ツールポインタ統合 | 承認 | 2026-07-09 |
 | [0006](0006-direct-push-workflow.md) | PR 必須を撤回し直接 push を既定へ(オーナー決定) | 承認 | 2026-07-09 |
 | [0007](0007-tools-lint-gate.md) | tools/*.py の常時 lint ゲートを make check へ追加 | 承認 | 2026-07-11 |
+| [0008](0008-docs-integrity-checks.md) | docs 整合検査(リンク実在・ADR↔INDEX・ルータ網羅)を構造ゲートへ追加 | 承認 | 2026-07-20 |

@@ -25,7 +25,9 @@ def make_valid_repo(root):
     root = Path(root)
     write(root / "AGENTS.md", "# AGENTS\n\n最小の正本。\n")
     write(root / "CLAUDE.md", "@AGENTS.md\n\nポインタのみ。\n")
-    write(root / "docs" / "README.md", "# docs ルータ\n")
+    write(root / "docs" / "README.md",
+          "# docs ルータ\n\n| したいこと | 読むファイル |\n|---|---|\n"
+          "| 採否の台帳を見たい | `docs/governance/tech-radar.md` |\n")
     write(root / "docs" / "governance" / "tech-radar.md", "# tech radar\n")
     return root
 
@@ -132,6 +134,88 @@ class CheckStructureTest(unittest.TestCase):
         write(self.root / "node_modules" / "pkg" / "readme.md", "src/legacy/foo\n")
         problems = cs.check_stale_refs(self.root, patterns=["src/legacy/"])
         self.assertEqual(problems, [])
+
+    # --- Markdown リンク実在検証(ADR-0008) ---
+    def test_md_link_broken_detected(self):
+        write(self.root / "docs" / "x.md", "[参照](missing.md)\n")
+        self.assertTrue(any("リンク切れ" in m for m in self.errors(cs.check_repo(self.root))))
+
+    def test_md_link_valid_passes(self):
+        write(self.root / "docs" / "y.md", "# 本文\n")
+        write(self.root / "docs" / "x.md", "[参照](y.md)\n")
+        errors = [m for m in self.errors(cs.check_repo(self.root)) if "リンク切れ" in m]
+        self.assertEqual(errors, [])
+
+    def test_md_link_external_anchor_placeholder_skipped(self):
+        write(self.root / "docs" / "x.md",
+              "[a](https://example.com/p.md) [b](#sec) [c](mailto:x@y.z)\n"
+              "[d]({{VAR}}/x.md) [e](tel:0312345678)\n")
+        errors = [m for m in self.errors(cs.check_repo(self.root)) if "リンク切れ" in m]
+        self.assertEqual(errors, [])
+
+    def test_md_link_inside_code_skipped(self):
+        write(self.root / "docs" / "x.md",
+              "```\n[a](missing.md)\n```\n本文 `[b](missing2.md)` の例\n")
+        errors = [m for m in self.errors(cs.check_repo(self.root)) if "リンク切れ" in m]
+        self.assertEqual(errors, [])
+
+    def test_md_link_fragment_stripped(self):
+        write(self.root / "docs" / "y.md", "# 見出し\n")
+        write(self.root / "docs" / "x.md", "[参照](y.md#見出し)\n")
+        errors = [m for m in self.errors(cs.check_repo(self.root)) if "リンク切れ" in m]
+        self.assertEqual(errors, [])
+
+    def test_md_link_absolute_path_flagged(self):
+        write(self.root / "docs" / "x.md", "[a](/etc/hosts)\n")
+        self.assertTrue(any("絶対パス" in m for m in self.errors(cs.check_repo(self.root))))
+
+    # --- ADR ↔ INDEX 同期(ADR-0008) ---
+    def test_adr_missing_from_index_flagged(self):
+        write(self.root / "docs" / "adr" / "INDEX.md", "# ADR 一覧\n")
+        write(self.root / "docs" / "adr" / "0001-first.md", "# ADR-0001\n")
+        self.assertTrue(any("索引漏れ" in m for m in self.errors(cs.check_repo(self.root))))
+
+    def test_adr_in_index_passes(self):
+        write(self.root / "docs" / "adr" / "INDEX.md", "# ADR 一覧\n[0001](0001-first.md)\n")
+        write(self.root / "docs" / "adr" / "0001-first.md", "# ADR-0001\n")
+        errors = [m for m in self.errors(cs.check_repo(self.root)) if "索引漏れ" in m]
+        self.assertEqual(errors, [])
+
+    def test_adr_without_index_file_flagged(self):
+        write(self.root / "docs" / "adr" / "0001-first.md", "# ADR-0001\n")
+        self.assertTrue(
+            any("INDEX.md" in m for m in self.errors(cs.check_repo(self.root))))
+
+    # --- ルータ到達可能性(ADR-0008、Trial: warn) ---
+    def test_router_uncovered_doc_warns_not_errors(self):
+        write(self.root / "docs" / "playbooks" / "foo.md", "# foo\n")
+        problems = cs.check_repo(self.root)
+        self.assertTrue(any("ルータ未掲載" in m for m in self.warns(problems)))
+        self.assertEqual([m for m in self.errors(problems) if "ルータ未掲載" in m], [])
+
+    def test_router_covered_doc_passes(self):
+        write(self.root / "docs" / "README.md",
+              "# docs ルータ\n`docs/governance/tech-radar.md`\n`docs/playbooks/foo.md`\n")
+        write(self.root / "docs" / "playbooks" / "foo.md", "# foo\n")
+        warns = [m for m in self.warns(cs.check_repo(self.root)) if "ルータ未掲載" in m]
+        self.assertEqual(warns, [])
+
+    def test_router_ledger_dir_exempts_files(self):
+        write(self.root / "docs" / "README.md",
+              "# docs ルータ\n`docs/governance/tech-radar.md`\n`docs/governance/intake/`\n")
+        write(self.root / "docs" / "governance" / "intake" / "2026-01-01-x.md", "# x\n")
+        warns = [m for m in self.warns(cs.check_repo(self.root)) if "ルータ未掲載" in m]
+        self.assertEqual(warns, [])
+
+    def test_router_unrouted_ledger_dir_warns(self):
+        write(self.root / "docs" / "governance" / "intake" / "2026-01-01-x.md", "# x\n")
+        self.assertTrue(
+            any("governance/intake" in m for m in self.warns(cs.check_repo(self.root))))
+
+    def test_router_structure_files_skipped(self):
+        write(self.root / "docs" / "conventions" / "TEMPLATE.md", "# 雛形\n")
+        warns = [m for m in self.warns(cs.check_repo(self.root)) if "ルータ未掲載" in m]
+        self.assertEqual(warns, [])
 
     # --- CLI 終了コード ---
     def test_main_returns_zero_on_valid(self):

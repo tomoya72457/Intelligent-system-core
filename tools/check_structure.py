@@ -10,12 +10,17 @@
   4. 陳腐化参照の検出(STALE_PATTERNS。物理再編したら追記。初期は空)
   5. ルート直下の想定外ファイル検出(許可リスト方式)
   6. docs/governance/tech-radar.md(採否の根拠台帳)の存在
+  7. Markdown 相対リンクの実在検証(error。ADR-0008)
+  8. docs/adr/ の各 ADR が INDEX.md に載っていること(error。ADR-0008)
+  9. docs/ 文書のルータ到達可能性(Trial 中は warn。ADR-0008)
 """
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 # ==== 予算・定数(docs/conventions/docs-rules.md の人間向け正本と一致させる) ====
 
@@ -73,6 +78,20 @@ _SKIP_DIR_PARTS = {
     "dist", "build", "scratch",
 }
 
+# ==== docs 整合検査(ADR-0008)の定数 ====
+
+# Markdown インラインリンク [text](target) の抽出(空白・閉じ括弧を含む target は対象外)。
+_MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+# 実在検証の対象外とする接頭辞(外部リンク・アンカー等)。
+_LINK_SKIP_PREFIXES = ("http://", "https://", "mailto:", "tel:", "ftp:", "//", "#")
+# ADR 本体のファイル名形式(INDEX.md との同期対象)。
+_ADR_NAME_RE = re.compile(r"^\d{4}-.*\.md$")
+# ルータ逐語掲載を免除する台帳・記録ディレクトリ(docs/ 相対)。ディレクトリのパスが
+# docs/README.md に載っていれば配下の個別ファイルは掲載不要(追記型台帳の粒度を尊重)。
+DOCS_LEDGER_DIRS = ("governance/intake", "handoffs", "specs", "incidents")
+# 索引・雛形などの構造ファイル。ルータ個別掲載の対象外。
+DOCS_STRUCTURE_NAMES = {"README.md", "INDEX.md", "TEMPLATE.md"}
+
 
 # ==== ユーティリティ ====
 
@@ -99,6 +118,20 @@ def _root_ignored(name):
 def _in_ignored_dir(path, root):
     rel = path.relative_to(root)
     return any(part in _SKIP_DIR_PARTS for part in rel.parts)
+
+
+def _md_text_outside_code(text):
+    """フェンスコードブロックとインラインコードを除いた Markdown 本文を返す。"""
+    lines = []
+    in_fence = False
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            lines.append(line)
+    return re.sub(r"`[^`\n]*`", "", "\n".join(lines))
 
 
 # ==== 個別チェック(各々 (severity, message) の list を返す。severity in {"error","warn"}) ====
@@ -198,6 +231,99 @@ def check_root_allowlist(root):
     return problems
 
 
+def check_md_links(root):
+    """Markdown 相対リンクの実在検証(docs-rules §4 の機械強制。ADR-0008)。
+
+    対象は [text](path) 形式のみ。外部 URL・アンカー・プレースホルダ({{...}})・
+    コードブロック内は除外し、#fragment は除去してから各ファイルの親基準で解決する。
+    """
+    problems = []
+    for md in sorted(root.rglob("*.md")):
+        if _in_ignored_dir(md, root):
+            continue
+        try:
+            text = md.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        rel = md.relative_to(root)
+        for target in _MD_LINK_RE.findall(_md_text_outside_code(text)):
+            if target.startswith(_LINK_SKIP_PREFIXES) or "{{" in target:
+                continue
+            path_part = unquote(target.split("#", 1)[0])
+            if not path_part:
+                continue
+            if path_part.startswith("/"):
+                problems.append(("error",
+                    f"リンク切れ: {rel} -> {target}(絶対パスでなく相対パスで書く)。"))
+            elif not (md.parent / path_part).exists():
+                problems.append(("error",
+                    f"リンク切れ: {rel} -> {target}(実在するファイルを指すこと)。"))
+    return problems
+
+
+def check_adr_index_sync(root):
+    """docs/adr/ の各 ADR が INDEX.md に載っていることの検証(ADR-0008)。
+
+    逆方向(INDEX のリンク先が実在するか)は check_md_links が担保する。
+    """
+    adr_dir = root / "docs" / "adr"
+    if not adr_dir.is_dir():
+        return []
+    index = adr_dir / "INDEX.md"
+    if not index.is_file():
+        return [("error", "docs/adr/INDEX.md(ADR 索引)が存在しません。")]
+    index_text = index.read_text(encoding="utf-8", errors="replace")
+    problems = []
+    for adr in sorted(adr_dir.glob("*.md")):
+        if _ADR_NAME_RE.match(adr.name) and adr.name not in index_text:
+            problems.append(("error",
+                f"ADR 索引漏れ: docs/adr/{adr.name} が INDEX.md に載っていません(1 行追記)。"))
+    return problems
+
+
+def check_router_coverage(root):
+    """docs/ 配下文書がルータ docs/README.md から到達可能かの検証(Trial: warn)。
+
+    階層ポリシー: adr/ の NNNN-*.md は INDEX.md 管理(check_adr_index_sync)、
+    台帳ディレクトリ(DOCS_LEDGER_DIRS)はディレクトリ行の掲載で足り、
+    それ以外はパスまたはファイル名がルータに現れること。偽陽性ゼロを実証後に
+    error へ昇格する(intake: docs-router-index-coverage、TTL 2026-10-18)。
+    """
+    docs_dir = root / "docs"
+    router = docs_dir / "README.md"
+    if not docs_dir.is_dir() or not router.is_file():
+        return []  # ルータ不在は check_router_readmes が error にする
+    router_text = router.read_text(encoding="utf-8", errors="replace")
+    problems = []
+    warned_dirs = set()
+    for md in sorted(docs_dir.rglob("*.md")):
+        if _in_ignored_dir(md, root):
+            continue
+        if md.name in DOCS_STRUCTURE_NAMES:
+            continue
+        rel = md.relative_to(docs_dir)
+        parent = rel.parent.as_posix()
+        if parent == "adr" and _ADR_NAME_RE.match(md.name):
+            continue
+        ledger = next((d for d in DOCS_LEDGER_DIRS
+                       if parent == d or parent.startswith(d + "/")), None)
+        if ledger is not None:
+            if (ledger + "/") in router_text:
+                continue
+            if ledger not in warned_dirs:
+                warned_dirs.add(ledger)
+                problems.append(("warn",
+                    f"ルータ未掲載: 台帳ディレクトリ docs/{ledger}/ が docs/README.md に"
+                    "載っていません(ディレクトリ行を1行追加)。"))
+            continue
+        if md.name in router_text or rel.as_posix() in router_text:
+            continue
+        problems.append(("warn",
+            f"ルータ未掲載: docs/{rel.as_posix()} が docs/README.md に載っていません"
+            "(用途起点の表へ1行追加)。"))
+    return problems
+
+
 def check_repo(root):
     """リポジトリルートに全チェックを適用し (severity, message) の list を返す。"""
     root = Path(root)
@@ -208,6 +334,9 @@ def check_repo(root):
     problems += check_tech_radar(root)
     problems += check_stale_refs(root)
     problems += check_root_allowlist(root)
+    problems += check_md_links(root)
+    problems += check_adr_index_sync(root)
+    problems += check_router_coverage(root)
     return problems
 
 
